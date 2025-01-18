@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import { AuthPage } from "./components/auth/AuthPage";
 import { GameList } from "./components/game/GameList";
+import { GameProvider } from "./contexts/GameContext";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem("token");
@@ -18,19 +19,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <Router>
-      <main className="min-h-screen bg-background">
-        <Routes>
-          <Route path="/" element={<AuthPage />} />
-          <Route
-            path="/games"
-            element={
-              <ProtectedRoute>
-                <GameList />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </main>
+      <GameProvider>
+        <main className="min-h-screen bg-background">
+          <Routes>
+            <Route path="/" element={<AuthPage />} />
+            <Route
+              path="/games"
+              element={
+                <ProtectedRoute>
+                  <GameList />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </main>
+      </GameProvider>
     </Router>
   );
 }
