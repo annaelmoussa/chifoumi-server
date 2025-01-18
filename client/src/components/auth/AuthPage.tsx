@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -7,117 +6,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
-
-interface AuthFormData {
-  username: string;
-  password: string;
-  confirmPassword?: string;
-}
+import { LoginForm } from "./LoginForm";
+import { RegisterForm } from "./RegisterForm";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export function AuthPage() {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const navigate = useNavigate();
-
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const data: AuthFormData = {
-      username: formData.get("username") as string,
-      password: formData.get("password") as string,
-    };
-
-    try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Identifiants invalides");
-      }
-
-      const result = await response.json();
-      localStorage.setItem("token", result.token);
-      navigate("/games");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const data: AuthFormData = {
-      username: formData.get("username") as string,
-      password: formData.get("password") as string,
-      confirmPassword: formData.get("confirm-password") as string,
-    };
-
-    if (data.password !== data.confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: data.username,
-          password: data.password,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erreur lors de l'inscription");
-      }
-
-      const loginResponse = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: data.username,
-          password: data.password,
-        }),
-      });
-
-      if (!loginResponse.ok) {
-        throw new Error("Erreur lors de la connexion automatique");
-      }
-
-      const result = await loginResponse.json();
-      localStorage.setItem("token", result.token);
-      navigate("/games");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { error } = useAuthContext();
 
   return (
     <div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-1 lg:px-0">
@@ -143,60 +37,10 @@ export function AuthPage() {
                 <TabsTrigger value="register">Inscription</TabsTrigger>
               </TabsList>
               <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Nom d'utilisateur</Label>
-                    <Input id="username" name="username" type="text" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Mot de passe</Label>
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      required
-                    />
-                  </div>
-                  <Button className="w-full" type="submit" disabled={isLoading}>
-                    {isLoading ? "Connexion..." : "Se connecter"}
-                  </Button>
-                </form>
+                <LoginForm />
               </TabsContent>
               <TabsContent value="register">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-username">Nom d'utilisateur</Label>
-                    <Input
-                      id="register-username"
-                      name="username"
-                      type="text"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Mot de passe</Label>
-                    <Input
-                      id="register-password"
-                      name="password"
-                      type="password"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">
-                      Confirmer le mot de passe
-                    </Label>
-                    <Input
-                      id="confirm-password"
-                      name="confirm-password"
-                      type="password"
-                      required
-                    />
-                  </div>
-                  <Button className="w-full" type="submit" disabled={isLoading}>
-                    {isLoading ? "Création..." : "Créer un compte"}
-                  </Button>
-                </form>
+                <RegisterForm />
               </TabsContent>
             </Tabs>
           </CardContent>
