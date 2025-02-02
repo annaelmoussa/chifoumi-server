@@ -1,4 +1,8 @@
 import { useEffect } from "react";
+import { useGames } from "@/hooks/useGames";
+import { Button } from "@/components/ui/button";
+import { Plus, RefreshCw } from "lucide-react";
+import { GameTableRow } from "./GameTableRow";
 import {
   Table,
   TableBody,
@@ -7,58 +11,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { CreateGameDialog } from "./CreateGameDialog";
-import { GameTableRow } from "./GameTableRow";
-import { useGameContext } from "@/contexts/GameContext";
-import { useGameActions } from "@/hooks/useGameActions";
-import { Game } from "@/types/game";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export function GameList() {
-  const { games, loading, error, createGame, fetchGames } = useGameContext();
-  const { handleJoinGame, error: actionError } = useGameActions();
+  const { games, loading, createGame, refreshGames } = useGames();
+  const { user } = useAuthContext();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetchGames();
-    }
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-[250px]" />
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+    refreshGames();
+  }, [refreshGames]);
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold tracking-tight">Mes Parties</h2>
-        <CreateGameDialog onCreateGame={createGame} />
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Liste des parties</h2>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshGames}
+            disabled={loading}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Rafraîchir
+          </Button>
+          <Button onClick={createGame} disabled={loading}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle partie
+          </Button>
+        </div>
       </div>
 
-      {(error || actionError) && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-          {error || actionError}
-        </div>
-      )}
-
-      <div className="rounded-md border">
+      <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Joueur 1</TableHead>
-              <TableHead>Joueur 2</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Créateur</TableHead>
+              <TableHead>Adversaire</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Date de création</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -66,16 +57,14 @@ export function GameList() {
             {games.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center">
-                  Aucune partie trouvée
+                  {loading
+                    ? "Chargement..."
+                    : "Aucune partie disponible. Créez-en une !"}
                 </TableCell>
               </TableRow>
             ) : (
-              games.map((game: Game) => (
-                <GameTableRow
-                  key={game._id}
-                  game={game}
-                  onJoinGame={handleJoinGame}
-                />
+              games.map((game) => (
+                <GameTableRow key={game._id} game={game} currentUser={user} />
               ))
             )}
           </TableBody>
