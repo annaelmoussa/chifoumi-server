@@ -48,6 +48,10 @@ services:
       - api
     networks:
       - chifoumi-network
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    user: "node"
 
 networks:
   chifoumi-network:

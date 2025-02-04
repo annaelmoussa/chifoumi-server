@@ -1,81 +1,55 @@
-import { Game, User } from "@/types/game";
 import { TableCell, TableRow } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
-import { useGameContext } from "@/contexts/GameContext";
+import { MoreHorizontal } from "lucide-react";
+import { Game } from "@/types/game";
+import { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface GameTableRowProps {
   game: Game;
-  currentUser: User | null;
+  onJoinGame: (gameId: string) => void;
+  statusBadge: ReactNode;
 }
 
-export function GameTableRow({ game, currentUser }: GameTableRowProps) {
-  const { joinGame } = useGameContext();
+export function GameTableRow({ game, onJoinGame, statusBadge }: GameTableRowProps) {
+  const navigate = useNavigate();
+  const formattedDate = new Date(game.createdAt).toLocaleDateString();
 
-  const isCreator = currentUser?._id === game.user1._id;
-  const canJoin = !isCreator && !game.user2 && !game.winner;
-  const isParticipant = isCreator || currentUser?._id === game.user2?._id;
-
-  const getStatus = () => {
-    if (game.winner) {
-      return (
-        <span className="text-green-600">
-          Terminée - Gagnant: {game.winner.username}
-        </span>
-      );
-    }
-    if (!game.user2) {
-      return <span className="text-yellow-600">En attente d'un adversaire</span>;
-    }
-    return <span className="text-blue-600">En cours</span>;
-  };
-
-  const handleJoinGame = async () => {
-    if (canJoin) {
-      await joinGame(game._id);
-    }
+  const handleViewGame = () => {
+    navigate(`/games/${game._id}`);
   };
 
   return (
     <TableRow>
+      <TableCell>{formattedDate}</TableCell>
       <TableCell>{game.user1.username}</TableCell>
-      <TableCell>{game.user2?.username || "-"}</TableCell>
-      <TableCell>{getStatus()}</TableCell>
+      <TableCell>{game.user2 ? game.user2.username : "En attente"}</TableCell>
+      <TableCell>{statusBadge}</TableCell>
       <TableCell>
-        {(() => {
-          try {
-            const date = new Date(game.createdAt);
-            if (isNaN(date.getTime())) {
-              return "Date invalide";
-            }
-            return formatDistanceToNow(date, {
-              addSuffix: true,
-              locale: fr,
-            });
-          } catch (error) {
-            return "Date invalide";
-          }
-        })()}
-      </TableCell>
-      <TableCell>
-        {canJoin ? (
-          <Button onClick={handleJoinGame} size="sm">
-            Rejoindre
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!isParticipant}
-            onClick={() => {
-              // TODO: Implémenter la navigation vers la page de jeu
-              console.log("Naviguer vers la partie:", game._id);
-            }}
-          >
-            {isParticipant ? "Voir" : "Non disponible"}
-          </Button>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Ouvrir menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {!game.user2 && (
+              <DropdownMenuItem onClick={() => onJoinGame(game._id)}>
+                Rejoindre la partie
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={handleViewGame}>
+              Voir la partie
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </TableCell>
     </TableRow>
   );

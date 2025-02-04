@@ -5,7 +5,8 @@ export interface User {
 
 export interface Turn {
   id: number;
-  move?: string;
+  user1?: string;
+  user2?: string;
   winner?: string;
 }
 

@@ -8,7 +8,8 @@ import {
   useRef,
 } from "react";
 import { EventSourcePolyfill } from "event-source-polyfill";
-import { Game } from "@/types/game";
+import { Game, Turn } from "@/types/game";
+import { useToast } from "@/hooks/use-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
@@ -19,6 +20,7 @@ interface GameContextType {
   createGame: () => Promise<void>;
   joinGame: (gameId: string) => Promise<void>;
   fetchGames: () => Promise<void>;
+  fetchGame: (gameId: string) => Promise<Game>;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -31,6 +33,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     new Map<string, EventSourcePolyfill>()
   );
   const loadingRef = useRef(false);
+  const { toast } = useToast();
 
   const fetchGames = useCallback(async () => {
     if (loadingRef.current) return;
@@ -75,6 +78,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchGame = async (gameId: string) => {
+    try {
+      const response = await fetch(`${API_URL}/matches/${gameId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch game");
+      const updatedGame = await response.json();
+      setGames((prev) =>
+        prev.map((game) => (game._id === gameId ? updatedGame : game))
+      );
+      return updatedGame;
+    } catch (err) {
+      console.error("Error fetching game:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
+    }
+  };
+
   const joinGame = async (gameId: string) => {
     try {
       setLoading(true);
@@ -86,10 +108,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         },
       });
       if (!response.ok) throw new Error("Failed to join game");
-      const updatedGame = await response.json();
-      setGames((prev) =>
-        prev.map((game) => (game._id === gameId ? updatedGame : game))
-      );
+      await fetchGame(gameId);
       subscribeToGame(gameId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -102,67 +121,222 @@ export function GameProvider({ children }: { children: ReactNode }) {
     (gameId: string) => {
       if (activeSubscriptions.has(gameId)) {
         activeSubscriptions.get(gameId)?.close();
+        activeSubscriptions.delete(gameId);
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found");
+        return;
       }
 
       const eventSource = new EventSourcePolyfill(
         `${API_URL}/matches/${gameId}/subscribe`,
         {
+          heartbeatTimeout: 45000,
+          withCredentials: true,
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Accept: "text/event-stream",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
+      eventSource.onopen = (event) => {
+        console.log("SSE connection opened:", event);
+      };
+
       eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        try {
+          const data = JSON.parse(event.data);
+          console.log("SSE message received:", data);
+
+          if (Array.isArray(data)) {
+            data.forEach(message => {
+              if (message.type) {
+                handleGameEvent(message);
+              }
+            });
+            return;
+          }
+
+          handleGameEvent(data);
+        } catch (error) {
+          console.error("Error processing SSE message:", error);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Erreur lors de la réception des mises à jour en temps réel",
+          });
+        }
+      };
+
+      const handleGameEvent = (data: any) => {
+        console.log("Processing game event:", data);
+        
+        const updateGame = async (matchId: string) => {
+          try {
+            const response = await fetch(`${API_URL}/matches/${matchId}`, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            });
+            if (!response.ok) throw new Error("Failed to fetch game");
+            const updatedGame = await response.json();
+            
+            setGames((prev) =>
+              prev.map((game) => {
+                if (game._id === matchId) {
+                  return {
+                    ...updatedGame,
+                    turns: updatedGame.turns.map((turn: Turn) => ({
+                      ...turn,
+                      user1: turn.winner ? turn.user1 : (turn.user1 || undefined),
+                      user2: turn.winner ? turn.user2 : (turn.user2 || undefined),
+                    })),
+                  };
+                }
+                return game;
+              })
+            );
+          } catch (error) {
+            console.error("Error updating game state:", error);
+            toast({
+              variant: "destructive",
+              title: "Erreur",
+              description: "Impossible de mettre à jour l'état du jeu",
+            });
+          }
+        };
+
+        const forceGameUpdate = async (matchId: string) => {
+          try {
+            const response = await fetch(`${API_URL}/matches/${matchId}`, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            });
+            if (!response.ok) throw new Error("Failed to fetch game");
+            const updatedGame = await response.json();
+            setGames((prev) => prev.map((game) => game._id === matchId ? updatedGame : game));
+          } catch (error) {
+            console.error("Error force updating game state:", error);
+          }
+        };
 
         switch (data.type) {
           case "PLAYER1_JOIN":
           case "PLAYER2_JOIN":
-            setGames((prev) =>
-              prev.map((game) =>
-                game._id === data.matchId
-                  ? { ...game, user2: data.payload.user }
-                  : game
-              )
-            );
+            updateGame(data.matchId);
             break;
+
+          case "NEW_TURN":
+            setGames((prev) =>
+              prev.map((game) => {
+                if (game._id === data.matchId) {
+                  const newTurn: Turn = {
+                    id: data.payload.turnId,
+                    user1: undefined,
+                    user2: undefined,
+                    winner: undefined,
+                  };
+                  return {
+                    ...game,
+                    turns: [...game.turns, newTurn],
+                  };
+                }
+                return game;
+              })
+            );
+            setTimeout(() => updateGame(data.matchId), 100);
+            setTimeout(() => forceGameUpdate(data.matchId), 300);
+            break;
+
           case "PLAYER1_MOVED":
           case "PLAYER2_MOVED":
-          case "TURN_ENDED":
-          case "MATCH_ENDED":
             setGames((prev) =>
-              prev.map((game) =>
-                game._id === data.matchId
-                  ? { ...game, ...data.payload.game }
-                  : game
-              )
+              prev.map((game) => {
+                if (game._id === data.matchId) {
+                  const updatedTurns = [...game.turns];
+                  const currentTurn = { ...updatedTurns[updatedTurns.length - 1] };
+                  
+                  if (data.type === "PLAYER1_MOVED") {
+                    currentTurn.user1 = "?";
+                  } else {
+                    currentTurn.user2 = "?";
+                  }
+
+                  return {
+                    ...game,
+                    turns: [...updatedTurns.slice(0, -1), currentTurn],
+                  };
+                }
+                return game;
+              })
             );
+            setTimeout(() => updateGame(data.matchId), 100);
             break;
+
+          case "TURN_ENDED":
+            setGames((prev) =>
+              prev.map((game) => {
+                if (game._id === data.matchId) {
+                  const updatedTurns = [...game.turns];
+                  const currentTurn = { ...updatedTurns[updatedTurns.length - 1] };
+                  currentTurn.winner = data.payload.winner;
+                  
+                  return {
+                    ...game,
+                    turns: [...updatedTurns.slice(0, -1), currentTurn],
+                  };
+                }
+                return game;
+              })
+            );
+            setTimeout(() => updateGame(data.matchId), 100);
+            setTimeout(() => forceGameUpdate(data.matchId), 300);
+            break;
+
+          case "MATCH_ENDED":
+            updateGame(data.matchId);
+            setTimeout(() => forceGameUpdate(data.matchId), 200);
+            break;
+
+          default:
+            console.log("Received event:", data.type, data);
         }
       };
 
-      eventSource.onerror = () => {
-        console.error("SSE error, falling back to polling");
-        eventSource.close();
-        activeSubscriptions.delete(gameId);
+      eventSource.onerror = (event) => {
+        console.error("SSE error:", event);
+        const retryAfter = 5000;
+        setTimeout(() => {
+          console.log("Attempting to reconnect SSE...");
+          eventSource.close();
+          activeSubscriptions.delete(gameId);
+          subscribeToGame(gameId);
+        }, retryAfter);
+
+        toast({
+          variant: "destructive",
+          title: "Erreur de connexion",
+          description: "Tentative de reconnexion en cours...",
+        });
       };
 
       activeSubscriptions.set(gameId, eventSource);
       return eventSource;
     },
-    [activeSubscriptions]
+    [activeSubscriptions, toast]
   );
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    // Fetch initial games
     fetchGames();
 
     return () => {
-      // Cleanup all subscriptions
       activeSubscriptions.forEach((eventSource) => eventSource.close());
       activeSubscriptions.clear();
     };
@@ -177,6 +351,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         createGame,
         joinGame,
         fetchGames,
+        fetchGame,
       }}
     >
       {children}

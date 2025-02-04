@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -6,17 +7,48 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { PlusCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface CreateGameDialogProps {
-  onCreateGame: () => void;
+  onCreateGame: () => Promise<void>;
 }
 
 export function CreateGameDialog({ onCreateGame }: CreateGameDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const { toast } = useToast();
+
+  const handleCreate = async () => {
+    try {
+      setIsCreating(true);
+      await onCreateGame();
+      setOpen(false);
+      toast({
+        title: "Partie créée",
+        description: "Votre partie a été créée avec succès. En attente d'un adversaire...",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer la partie. Veuillez réessayer.",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Nouvelle Partie</Button>
+        <Button className="gap-2">
+          <PlusCircle className="h-4 w-4" />
+          Nouvelle Partie
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -26,9 +58,25 @@ export function CreateGameDialog({ onCreateGame }: CreateGameDialogProps) {
             d'un adversaire.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-end">
-          <Button onClick={onCreateGame}>Créer</Button>
-        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={isCreating}
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={handleCreate}
+            disabled={isCreating}
+            className={cn(
+              "relative",
+              isCreating && "cursor-not-allowed opacity-50"
+            )}
+          >
+            {isCreating ? "Création..." : "Créer"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

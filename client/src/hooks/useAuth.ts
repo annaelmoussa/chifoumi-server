@@ -4,6 +4,14 @@ import { AuthFormData, LoginResponse, User } from "@/types/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
+const parseJwt = (token: string) => {
+  try {
+    return JSON.parse(atob(token.split('.')[1]));
+  } catch (e) {
+    return null;
+  }
+};
+
 export function useAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,11 +33,23 @@ export function useAuth() {
         throw new Error("Identifiants invalides");
       }
 
-      const result: LoginResponse = await response.json();
-      localStorage.setItem("token", result.token);
-      localStorage.setItem("user", JSON.stringify(result.user));
+      const result = await response.json();
+      const token = result.token;
+      localStorage.setItem("token", token);
+      
+      const userData = parseJwt(token);
+      if (!userData) {
+        throw new Error("Token invalide");
+      }
+      
+      const user: User = {
+        _id: userData._id,
+        username: userData.username
+      };
+      
+      localStorage.setItem("user", JSON.stringify(user));
       navigate("/games");
-      return result.user;
+      return user;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
       return null;
@@ -63,7 +83,6 @@ export function useAuth() {
         throw new Error(errorData.error || "Erreur lors de l'inscription");
       }
 
-      // Auto-login after successful registration
       return login({
         username: data.username,
         password: data.password,

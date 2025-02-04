@@ -6,8 +6,10 @@ import {
 } from "react-router-dom";
 import { AuthPage } from "./components/auth/AuthPage";
 import { GameList } from "./components/game/GameList";
+import GamePage from "./components/game/GamePage";
 import { GameProvider } from "./contexts/GameContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { Toaster } from "./components/ui/toaster";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem("token");
@@ -33,8 +35,17 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/games/:id"
+                element={
+                  <ProtectedRoute>
+                    <GamePage />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </main>
+          <Toaster />
         </GameProvider>
       </AuthProvider>
     </Router>
