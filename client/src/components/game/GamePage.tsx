@@ -22,7 +22,7 @@ const GamePage = () => {
   const isPlayer1 = user && game ? user.username === game.user1?.username : false;
   const isPlayer2 = user && game ? user.username === game.user2?.username : false;
   const currentTurn = game?.turns && game.turns.length > 0 
-    ? (game.turns[game.turns.length - 1].user1 && game.turns[game.turns.length - 1].user2)
+    ? (game.turns[game.turns.length - 1].winner || (game.turns[game.turns.length - 1].user1 && game.turns[game.turns.length - 1].user2))
       ? { id: game.turns.length + 1, user1: null, user2: null }
       : { ...game.turns[game.turns.length - 1], id: game.turns.length }
     : game?.user2 
@@ -86,8 +86,11 @@ console.log("Player2:", game?.user2?.username);
     console.log("Received game update:", updatedGame);
     if (updatedGame._id === id) {
       setGame(updatedGame);
-      if (currentTurn?.user1 && currentTurn?.user2) {
-        setCurrentMove(null);
+      if (updatedGame.turns && updatedGame.turns.length > 0) {
+        const lastTurn = updatedGame.turns[updatedGame.turns.length - 1];
+        if (lastTurn.winner || (lastTurn.user1 && lastTurn.user2)) {
+          setCurrentMove(null);
+        }
       }
     }
   });
