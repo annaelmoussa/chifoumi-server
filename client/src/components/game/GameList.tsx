@@ -18,6 +18,7 @@ import { useGameActions } from "@/hooks/useGameActions";
 import { Game } from "@/types/game";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import GameStatistics from "./GameStatistics";
 
 
 export function GameList() {
@@ -71,6 +72,7 @@ export function GameList() {
         <h2 className="text-3xl font-bold tracking-tight">Mes Parties</h2>
         <CreateGameDialog onCreateGame={createGame} />
       </div>
+      <GameStatistics />
 
       <Tabs defaultValue="table" className="w-full">
         <TabsList className="mb-4">

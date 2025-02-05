@@ -34,23 +34,6 @@ const GamePage = () => {
     ? game.turns[game.turns.length - 1]
     : (game?.user2 ? { id: 1, user1: null, user2: null } : undefined);
 
-  console.log("User:", user?.username);
-console.log("Player1:", game?.user1?.username);
-console.log("Player2:", game?.user2?.username);
-
-  
-  console.log("Game state:", {
-    gameId: game?._id,
-    user: user?.username,
-    user1: game?.user1?.username,
-    user2: game?.user2?.username,
-    isPlayer1,
-    isPlayer2,
-    currentTurn,
-    turnsCount: game?.turns?.length,
-    player1Move: currentTurn?.user1,
-    player2Move: currentTurn?.user2
-  });
 
   const canPlay = Boolean(
     !currentMove &&
@@ -73,18 +56,6 @@ console.log("Player2:", game?.user2?.username);
     if (isYourTurn) return "Your turn!";
     return "Opponent's turn";
   };
-
-  console.log({
-    currentMove,
-    user2Exists: !!game?.user2,
-    currentTurnExists: !!currentTurn,
-    noWinner: !game?.winner,
-    player1CanMove: isPlayer1 && !currentTurn?.user1,
-    player2CanMove: isPlayer2 && !currentTurn?.user2,
-    currentTurnState: currentTurn,
-    user1Move: currentTurn?.user1,
-    user2Move: currentTurn?.user2
-  });
   
 
   useGameEvents(id || "", (updatedGame) => {
