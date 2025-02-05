@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useGameEvents } from "@/hooks/useGameEvents";
+import MoveCard from "./MoveCard";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
@@ -28,6 +29,10 @@ const GamePage = () => {
     : game?.user2 
       ? { id: 1, user1: null, user2: null }
       : undefined;
+
+  const displayTurn = game?.turns && game.turns.length > 0
+    ? game.turns[game.turns.length - 1]
+    : (game?.user2 ? { id: 1, user1: null, user2: null } : undefined);
 
   console.log("User:", user?.username);
 console.log("Player1:", game?.user1?.username);
@@ -190,6 +195,16 @@ console.log("Player2:", game?.user2?.username);
             <div className="text-center">
               <h3 className="font-bold">{game.user2?.username || "Waiting..."}</h3>
               {isPlayer2 && <span className="text-sm">(You)</span>}
+            </div>
+          </div>
+          <div className="flex justify-center gap-8 my-4">
+            <div>
+              <MoveCard move={displayTurn?.user1 ? displayTurn.user1 as "rock" | "paper" | "scissors" : null} revealed={Boolean(displayTurn?.user1)} />
+              <p className="text-center text-sm mt-2">{game.user1.username}</p>
+            </div>
+            <div>
+              <MoveCard move={displayTurn?.user2 ? displayTurn.user2 as "rock" | "paper" | "scissors" : null} revealed={Boolean(displayTurn?.user2)} />
+              <p className="text-center text-sm mt-2">{game.user2 ? game.user2.username : "Waiting..."}</p>
             </div>
           </div>
 
