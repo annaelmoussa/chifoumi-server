@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Game } from "@/types/game";
 import { useGameContext } from "@/contexts/GameContext";
 
 export function useGameActions() {
@@ -11,8 +10,7 @@ export function useGameActions() {
   const handleJoinGame = async (gameId: string) => {
     try {
       await joinGame(gameId);
-      // TODO: Implémenter la navigation vers la page de jeu une fois créée
-      // navigate(`/game/${gameId}`);
+      navigate(`/game/${gameId}`);
     } catch (err) {
       handleError(err);
     }

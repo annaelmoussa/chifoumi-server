@@ -27,7 +27,6 @@ export function GameTableRow({ game, onJoinGame, statusBadge }: GameTableRowProp
 
   return (
     <TableRow>
-      <TableCell>{formattedDate}</TableCell>
       <TableCell>{game.user1.username}</TableCell>
       <TableCell>{game.user2 ? game.user2.username : "En attente"}</TableCell>
       <TableCell>{statusBadge}</TableCell>

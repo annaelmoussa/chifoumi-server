@@ -92,7 +92,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
       return updatedGame;
     } catch (err) {
-      console.error("Error fetching game:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
     }
   };
@@ -126,7 +125,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       const token = localStorage.getItem("token");
       if (!token) {
-        console.error("No token found");
         return;
       }
 
@@ -149,8 +147,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("SSE message received:", data);
-
           if (Array.isArray(data)) {
             data.forEach(message => {
               if (message.type) {
@@ -162,7 +158,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
           handleGameEvent(data);
         } catch (error) {
-          console.error("Error processing SSE message:", error);
           toast({
             variant: "destructive",
             title: "Erreur",
@@ -172,8 +167,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       };
 
       const handleGameEvent = (data: any) => {
-        console.log("Processing game event:", data);
-        
         const updateGame = async (matchId: string) => {
           try {
             const response = await fetch(`${API_URL}/matches/${matchId}`, {
@@ -200,7 +193,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
               })
             );
           } catch (error) {
-            console.error("Error updating game state:", error);
             toast({
               variant: "destructive",
               title: "Erreur",
@@ -307,11 +299,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       };
 
-      eventSource.onerror = (event) => {
-        console.error("SSE error:", event);
+      eventSource.onerror = () => {
         const retryAfter = 5000;
         setTimeout(() => {
-          console.log("Attempting to reconnect SSE...");
           eventSource.close();
           activeSubscriptions.delete(gameId);
           subscribeToGame(gameId);

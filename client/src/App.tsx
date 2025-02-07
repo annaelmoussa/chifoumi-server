@@ -4,13 +4,14 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { AuthPage } from "./components/auth/AuthPage";
-import { GameList } from "./components/game/GameList";
-import GamePage from "./components/game/GamePage";
-import { GameProvider } from "./contexts/GameContext";
-import { AuthProvider } from "./contexts/AuthContext";
-import { Toaster } from "./components/ui/toaster";
-
+import { AuthPage } from "@/pages/AuthPage";
+import { GameList } from "@/components/game/lists/GameList";
+import GamePage from "@/pages/GamePage";
+import StatisticsPage from "@/pages/StatisticsPage";
+import { GameProvider } from "@/contexts/GameContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { Toaster } from "@/components/ui/toaster";
+import UserNav from "@/components/UserNav";
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -24,9 +25,19 @@ function App() {
     <Router>
       <AuthProvider>
         <GameProvider>
+          <UserNav />
           <main className="min-h-screen bg-background">
             <Routes>
-              <Route path="/" element={<AuthPage />} />
+              <Route
+                path="/"
+                element={
+                  localStorage.getItem("token") ? (
+                    <Navigate to="/games" replace />
+                  ) : (
+                    <AuthPage />
+                  )
+                }
+              />
               <Route
                 path="/games"
                 element={
@@ -40,6 +51,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <GamePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/statistics"
+                element={
+                  <ProtectedRoute>
+                    <StatisticsPage />
                   </ProtectedRoute>
                 }
               />

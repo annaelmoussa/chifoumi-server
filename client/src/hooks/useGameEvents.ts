@@ -69,9 +69,6 @@ export function useGameEvents(gameId: string, onGameUpdate: (game: Game) => void
           return;
         }
         lastProcessedEventsRef.current = eventsString;
-
-        console.log("Processing SSE message:", eventsArray);
-
         eventsArray.forEach((data: GameEvent) => {
           switch (data.type) {
             case "PLAYER1_JOIN":
@@ -145,8 +142,7 @@ export function useGameEvents(gameId: string, onGameUpdate: (game: Game) => void
       }
     };
 
-    eventSource.onerror = (error) => {
-      console.error("SSE error:", error);
+    eventSource.onerror = () => {
       toast({
         variant: "destructive",
         title: "Erreur de connexion",

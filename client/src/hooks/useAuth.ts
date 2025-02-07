@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthFormData, LoginResponse, User } from "@/types/auth";
+import { AuthFormData, User } from "@/types/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
