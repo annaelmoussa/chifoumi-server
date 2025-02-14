@@ -10,7 +10,7 @@ export function useGameActions() {
   const handleJoinGame = async (gameId: string) => {
     try {
       await joinGame(gameId);
-      navigate(`/game/${gameId}`);
+      navigate(`/games/${gameId}`);
     } catch (err) {
       handleError(err);
     }
