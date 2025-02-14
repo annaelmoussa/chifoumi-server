@@ -21,17 +21,17 @@ export function GameList() {
     if (token) {
       fetchGames();
     }
-  }, []);
+  }, [fetchGames]);
 
   useEffect(() => {
     if (error || actionError) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error || actionError,
+        description: error ?? actionError,
       });
     }
-  }, [error, actionError]);
+  }, [error, actionError, toast]);
 
   if (loading) {
     return (

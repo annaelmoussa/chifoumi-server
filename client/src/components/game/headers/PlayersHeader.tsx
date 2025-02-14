@@ -24,7 +24,7 @@ const PlayersHeader: React.FC<PlayersHeaderProps> = ({ game }) => {
       </div>
       <div className="text-2xl font-bold">VS</div>
       <div className="text-center">
-        <h3 className="font-bold">{game.user2?.username || "En attente..."}</h3>
+        <h3 className="font-bold">{game.user2?.username ?? "En attente..."}</h3>
         {isPlayer2 && (
           <UserCheck className="inline h-4 w-4 ml-2" aria-label="Vous" />
         )}

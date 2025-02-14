@@ -4,7 +4,7 @@ interface GameListHeaderProps {
   createGame: () => Promise<void>;
 }
 
-export function GameListHeader({ createGame }: GameListHeaderProps) {
+export function GameListHeader({ createGame }: Readonly<GameListHeaderProps>) {
   return (
     <div className="flex justify-between items-center mb-8">
       <h2 className="text-3xl font-bold tracking-tight">Mes Parties</h2>

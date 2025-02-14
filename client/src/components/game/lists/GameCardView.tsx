@@ -13,7 +13,7 @@ export function GameCardView({
   games,
   getStatusBadge,
   handleJoinGame,
-}: GameCardViewProps) {
+}: Readonly<GameCardViewProps>) {
   const navigate = useNavigate();
 
   return (

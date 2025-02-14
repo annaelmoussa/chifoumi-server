@@ -24,13 +24,13 @@ const GameHistory: React.FC<GameHistoryProps> = ({ game }) => {
               <span className="flex items-center gap-1">
                 <User size={16} className="text-gray-500" />
                 {game.user1.username}:{" "}
-                {turn.user1 === "?" ? "?" : turn.user1 || "en attente..."}
+                {turn.user1 === "?" ? "?" : turn.user1 ?? "en attente..."}
               </span>
               {game.user2 && (
                 <span className="flex items-center gap-1">
                   <User size={16} className="text-gray-500" />
                   {game.user2.username}:{" "}
-                  {turn.user2 === "?" ? "?" : turn.user2 || "en attente..."}
+                  {turn.user2 === "?" ? "?" : turn.user2 ?? "en attente..."}
                 </span>
               )}
             </div>

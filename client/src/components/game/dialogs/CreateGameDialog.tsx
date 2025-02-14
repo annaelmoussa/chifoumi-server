@@ -17,7 +17,7 @@ interface CreateGameDialogProps {
   onCreateGame: () => Promise<void>;
 }
 
-export function CreateGameDialog({ onCreateGame }: CreateGameDialogProps) {
+export function CreateGameDialog({ onCreateGame }: Readonly<CreateGameDialogProps>) {
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();

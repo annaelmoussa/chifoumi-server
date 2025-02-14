@@ -24,7 +24,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [user, setUser] = useState<User | null>(null);
   const auth = useAuth();
 
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (currentUser) {
       setUser(currentUser);
     }
-  }, []);
+  }, [auth]);
 
   const login = async (username: string, password: string) => {
     const user = await auth.login({ username, password });

@@ -19,7 +19,7 @@ export function GameTableView({
   games,
   getStatusBadge,
   handleJoinGame,
-}: GameTableViewProps) {
+}: Readonly<GameTableViewProps>) {
   return (
     <div className="rounded-md border">
       <Table>
