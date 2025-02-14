@@ -12,7 +12,10 @@ interface GameEvent {
   payload: any;
 }
 
-export function useGameEvents(gameId: string, onGameUpdate: (game: Game) => void) {
+export function useGameEvents(
+  gameId: string,
+  onGameUpdate: (game: Game) => void
+) {
   const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
   const { toast } = useToast();
   const { fetchGame } = useGameContext();
@@ -49,7 +52,7 @@ export function useGameEvents(gameId: string, onGameUpdate: (game: Game) => void
       `${API_URL}/matches/${gameId}/subscribe`,
       {
         heartbeatTimeout: 45000,
-        withCredentials: true,
+        withCredentials: false,
         headers: {
           Accept: "text/event-stream",
           Authorization: `Bearer ${token}`,
@@ -117,9 +120,10 @@ export function useGameEvents(gameId: string, onGameUpdate: (game: Game) => void
               const { winner } = data.payload;
               toast({
                 title: "Fin du tour",
-                description: winner === "draw" 
-                  ? "Match nul pour ce tour !" 
-                  : `${winner} a gagné ce tour !`,
+                description:
+                  winner === "draw"
+                    ? "Match nul pour ce tour !"
+                    : `${winner} a gagné ce tour !`,
               });
               setTimeout(() => updateGameState(true), 100);
               break;
@@ -129,9 +133,10 @@ export function useGameEvents(gameId: string, onGameUpdate: (game: Game) => void
               const matchWinner = data.payload.winner;
               toast({
                 title: "Fin de la partie !",
-                description: matchWinner === "draw"
-                  ? "La partie se termine sur un match nul !"
-                  : `${matchWinner} a gagné la partie !`,
+                description:
+                  matchWinner === "draw"
+                    ? "La partie se termine sur un match nul !"
+                    : `${matchWinner} a gagné la partie !`,
                 variant: "default",
               });
               break;
@@ -157,4 +162,4 @@ export function useGameEvents(gameId: string, onGameUpdate: (game: Game) => void
   }, [gameId, onGameUpdate, toast, fetchGame]);
 
   return eventSourceRef.current;
-} 
+}

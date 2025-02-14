@@ -132,7 +132,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         `${API_URL}/matches/${gameId}/subscribe`,
         {
           heartbeatTimeout: 45000,
-          withCredentials: true,
+          withCredentials: false,
           headers: {
             Accept: "text/event-stream",
             Authorization: `Bearer ${token}`,
@@ -148,7 +148,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         try {
           const data = JSON.parse(event.data);
           if (Array.isArray(data)) {
-            data.forEach(message => {
+            data.forEach((message) => {
               if (message.type) {
                 handleGameEvent(message);
               }
@@ -161,7 +161,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           toast({
             variant: "destructive",
             title: "Erreur",
-            description: "Erreur lors de la réception des mises à jour en temps réel",
+            description:
+              "Erreur lors de la réception des mises à jour en temps réel",
           });
         }
       };
@@ -176,7 +177,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             });
             if (!response.ok) throw new Error("Failed to fetch game");
             const updatedGame = await response.json();
-            
+
             setGames((prev) =>
               prev.map((game) => {
                 if (game._id === matchId) {
@@ -184,8 +185,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
                     ...updatedGame,
                     turns: updatedGame.turns.map((turn: Turn) => ({
                       ...turn,
-                      user1: turn.winner ? turn.user1 : (turn.user1 || undefined),
-                      user2: turn.winner ? turn.user2 : (turn.user2 || undefined),
+                      user1: turn.winner ? turn.user1 : turn.user1 || undefined,
+                      user2: turn.winner ? turn.user2 : turn.user2 || undefined,
                     })),
                   };
                 }
@@ -210,7 +211,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
             });
             if (!response.ok) throw new Error("Failed to fetch game");
             const updatedGame = await response.json();
-            setGames((prev) => prev.map((game) => game._id === matchId ? updatedGame : game));
+            setGames((prev) =>
+              prev.map((game) => (game._id === matchId ? updatedGame : game))
+            );
           } catch (error) {
             console.error("Error force updating game state:", error);
           }
@@ -250,8 +253,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
               prev.map((game) => {
                 if (game._id === data.matchId) {
                   const updatedTurns = [...game.turns];
-                  const currentTurn = { ...updatedTurns[updatedTurns.length - 1] };
-                  
+                  const currentTurn = {
+                    ...updatedTurns[updatedTurns.length - 1],
+                  };
+
                   if (data.type === "PLAYER1_MOVED") {
                     currentTurn.user1 = "?";
                   } else {
@@ -274,9 +279,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
               prev.map((game) => {
                 if (game._id === data.matchId) {
                   const updatedTurns = [...game.turns];
-                  const currentTurn = { ...updatedTurns[updatedTurns.length - 1] };
+                  const currentTurn = {
+                    ...updatedTurns[updatedTurns.length - 1],
+                  };
                   currentTurn.winner = data.payload.winner;
-                  
+
                   return {
                     ...game,
                     turns: [...updatedTurns.slice(0, -1), currentTurn],

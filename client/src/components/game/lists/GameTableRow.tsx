@@ -17,10 +17,8 @@ interface GameTableRowProps {
   statusBadge: ReactNode;
 }
 
-export function GameTableRow({ game, onJoinGame, statusBadge }: GameTableRowProps) {
+export function GameTableRow({ game, onJoinGame, statusBadge }: Readonly<GameTableRowProps>) {
   const navigate = useNavigate();
-  const formattedDate = new Date(game.createdAt).toLocaleDateString();
-
   const handleViewGame = () => {
     navigate(`/games/${game._id}`);
   };
